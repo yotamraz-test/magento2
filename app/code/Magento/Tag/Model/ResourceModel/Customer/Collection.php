@@ -61,7 +61,7 @@ class Collection extends CustomerCollection
      *
      * @return $this
      */
-    private function joinTagRelation(): self
+    public function joinTagRelation(): self
     {
         if ($this->getFlag('tag_relation_joined')) {
             return $this;

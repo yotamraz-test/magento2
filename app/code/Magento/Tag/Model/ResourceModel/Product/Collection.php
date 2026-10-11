@@ -25,7 +25,7 @@ class Collection extends ProductCollection
      */
     public function addTagFilter(int $tagId): self
     {
-        $this->joinTagFilter();
+        $this->joinTagRelation();
         $this->getSelect()->where('tag_relation.tag_id = ?', $tagId);
         $this->setFlag('distinct', true);
         return $this;
@@ -39,7 +39,7 @@ class Collection extends ProductCollection
      */
     public function addCustomerFilter(int $customerId): self
     {
-        $this->joinTagFilter();
+        $this->joinTagRelation();
         $this->getSelect()->where('tag_relation.customer_id = ?', $customerId);
         return $this;
     }
@@ -53,7 +53,7 @@ class Collection extends ProductCollection
     public function addStoreFilter($storeId = null)
     {
         if ($storeId !== null) {
-            $this->joinTagFilter();
+            $this->joinTagRelation();
             $this->getSelect()->where('tag_relation.store_id IN (?)', $storeId);
         }
         return $this;
@@ -64,7 +64,7 @@ class Collection extends ProductCollection
      *
      * @return $this
      */
-    public function joinTagFilter(): self
+    public function joinTagRelation(): self
     {
         if ($this->getFlag('tag_relation_joined')) {
             return $this;
