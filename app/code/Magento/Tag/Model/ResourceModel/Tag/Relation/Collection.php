@@ -13,8 +13,6 @@ use Magento\Tag\Model\Tag\Relation as RelationModel;
 
 /**
  * Tag Relation collection resource model.
- *
- * Thin scaffold around the tag_relation table; join helpers can be added as callers need them.
  */
 class Collection extends AbstractCollection
 {
@@ -24,5 +22,54 @@ class Collection extends AbstractCollection
     protected function _construct(): void
     {
         $this->_init(RelationModel::class, RelationResource::class);
+    }
+
+    /**
+     * @param int $tagId
+     * @return $this
+     */
+    public function addTagFilter(int $tagId): self
+    {
+        $this->addFieldToFilter('tag_id', $tagId);
+        return $this;
+    }
+
+    /**
+     * @param int $customerId
+     * @return $this
+     */
+    public function addCustomerFilter(int $customerId): self
+    {
+        $this->addFieldToFilter('customer_id', $customerId);
+        return $this;
+    }
+
+    /**
+     * @param int $productId
+     * @return $this
+     */
+    public function addProductFilter(int $productId): self
+    {
+        $this->addFieldToFilter('product_id', $productId);
+        return $this;
+    }
+
+    /**
+     * @param int $storeId
+     * @return $this
+     */
+    public function addStoreFilter(int $storeId): self
+    {
+        $this->addFieldToFilter('store_id', $storeId);
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function addActiveFilter(): self
+    {
+        $this->addFieldToFilter('active', RelationModel::STATUS_ACTIVE);
+        return $this;
     }
 }
