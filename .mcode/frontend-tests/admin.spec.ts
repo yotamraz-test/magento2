@@ -7,7 +7,7 @@ import { test, expect, Page } from "@playwright/test";
  * Tags menu item is injected prematurely — that is a milestone 2 concern).
  */
 
-const ADMIN_PATH = "/admin_xptuha1";
+const ADMIN_PATH = "/admin";
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "admin123";
 
