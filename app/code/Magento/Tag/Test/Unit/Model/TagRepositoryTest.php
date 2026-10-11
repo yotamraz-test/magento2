@@ -12,7 +12,6 @@ use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Tag\Api\Data\TagInterface;
 use Magento\Tag\Api\Data\TagSearchResultsInterface;
 use Magento\Tag\Api\Data\TagSearchResultsInterfaceFactory;
 use Magento\Tag\Model\ResourceModel\Tag as TagResource;
