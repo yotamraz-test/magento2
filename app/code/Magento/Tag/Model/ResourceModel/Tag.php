@@ -12,11 +12,13 @@ use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Attribute\Source\Status as ProductStatus;
 use Magento\Catalog\Model\Product\Visibility;
 use Magento\Eav\Model\Config as EavConfig;
+use Magento\Framework\DataObject;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\DB\Select;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Magento\Framework\Model\ResourceModel\Db\Context;
+use Magento\Tag\Api\Data\TagInterface;
 use Magento\Tag\Model\Tag as TagModel;
 
 /**
@@ -52,11 +54,11 @@ class Tag extends AbstractDb
     /**
      * Load a tag row by its name into the given object.
      *
-     * @param AbstractModel $object
+     * @param DataObject $object
      * @param string $name
      * @return $this
      */
-    public function loadByName(AbstractModel $object, string $name): self
+    public function loadByName(DataObject $object, string $name): self
     {
         if ($name === '') {
             return $this;
@@ -73,6 +75,28 @@ class Tag extends AbstractDb
         $object->setData(is_array($data) ? $data : []);
 
         return $this;
+    }
+
+    /**
+     * Reuse a pending tag's ID when saving an approved tag with the same name.
+     *
+     * @param AbstractModel $object
+     * @return $this
+     */
+    protected function _beforeSave(AbstractModel $object): self
+    {
+        if (!$object->getId()
+            && (int)$object->getData(TagInterface::STATUS) === TagInterface::STATUS_APPROVED
+        ) {
+            $searchTag = new DataObject();
+            $this->loadByName($searchTag, (string)($object->getData(TagInterface::NAME) ?? ''));
+            if ($searchTag->getData($this->getIdFieldName())
+                && (int)$searchTag->getData(TagInterface::STATUS) === TagInterface::STATUS_PENDING
+            ) {
+                $object->setId($searchTag->getData($this->getIdFieldName()));
+            }
+        }
+        return parent::_beforeSave($object);
     }
 
     /**
