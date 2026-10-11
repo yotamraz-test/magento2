@@ -19,8 +19,8 @@ use Magento\Tag\Model\ResourceModel\Tag\Relation as RelationResource;
  * @method Relation setActive(int $value)
  * @method array getAddedProductIds()
  * @method Relation setAddedProductIds(array $value)
- * @method int getCustomerId()
- * @method Relation setCustomerId(int $value)
+ * @method int|null getCustomerId()
+ * @method Relation setCustomerId(?int $value)
  * @method int getProductId()
  * @method Relation setProductId(int $value)
  * @method Relation setProductIds(array $value)
@@ -130,16 +130,18 @@ class Relation extends AbstractModel
     /**
      * Create relations for all combinations of tagIds x productIds for the given customer and store.
      *
-     * Delegates the actual insertion to the resource model, which handles the diff computation
-     * (only inserting relations that do not already exist).
+     * Delegates the actual insertion / replace to the resource model, which handles the diff
+     * computation (inserting new rows and deleting rows no longer present in $productIds).
+     * `$customerId` may be null for admin-authored assignments (no owning customer); the value
+     * is passed through to the resource layer as-is — do not coerce null to 0.
      *
      * @param array $tagIds
      * @param array $productIds
-     * @param int $customerId
+     * @param int|null $customerId Null for admin-authored assignments.
      * @param int $storeId
      * @return $this
      */
-    public function addRelations(array $tagIds, array $productIds, int $customerId, int $storeId): self
+    public function addRelations(array $tagIds, array $productIds, ?int $customerId, int $storeId): self
     {
         $this->setData('added_product_ids', $productIds);
         $this->setData('tag_id', count($tagIds) === 1 ? reset($tagIds) : null);

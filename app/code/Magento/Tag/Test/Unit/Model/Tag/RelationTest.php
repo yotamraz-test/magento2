@@ -163,4 +163,26 @@ class RelationTest extends TestCase
         $this->assertSame($customerId, $this->relation->getData('customer_id'));
         $this->assertSame($storeId, $this->relation->getData('store_id'));
     }
+
+    public function testAddRelationsNullCustomerIdPassesThroughForAdminAssignment(): void
+    {
+        $tagIds = [55];
+        $productIds = [100, 200];
+        $storeId = 2;
+
+        $this->resourceMock->expects($this->once())
+            ->method('addRelations')
+            ->with($this->relation)
+            ->willReturnSelf();
+
+        // Admin-authored assignment: customer_id is null (not 0) so the FK is NULL in storage.
+        $result = $this->relation->addRelations($tagIds, $productIds, null, $storeId);
+
+        $this->assertSame($this->relation, $result);
+        $this->assertSame($productIds, $this->relation->getData('added_product_ids'));
+        $this->assertSame(55, $this->relation->getData('tag_id'));
+        $this->assertSame($tagIds, $this->relation->getData('related_tag_ids'));
+        $this->assertNull($this->relation->getData('customer_id'));
+        $this->assertSame($storeId, $this->relation->getData('store_id'));
+    }
 }

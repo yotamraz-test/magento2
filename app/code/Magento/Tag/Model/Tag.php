@@ -400,10 +400,11 @@ class Tag extends AbstractModel implements TagInterface, IdentityInterface
         if ($this->hasData('tag_assigned_products')) {
             /** @var Relation $tagRelationModel */
             $tagRelationModel = $this->relationFactory->create();
+            // Admin-authored assignment: no owning customer, so customer_id is null (not 0).
             $tagRelationModel->addRelations(
                 [$this->getTagId()],
                 (array)$this->getDataByKey('tag_assigned_products'),
-                0,
+                null,
                 (int)$this->getData('store')
             );
         }

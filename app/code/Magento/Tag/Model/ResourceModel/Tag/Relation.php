@@ -167,11 +167,13 @@ class Relation extends AbstractDb
     }
 
     /**
-     * Diff-based inserter for tag/product relations.
+     * Replace tag/product relations for the model's (tag_ids, customer, store) scope.
      *
-     * Loads the currently-related tag_ids for the model's (customer, store, added_product_ids)
-     * tuple, computes the set of (tag_id, product_id) pairs that are new, and inserts them
-     * with ON DUPLICATE KEY UPDATE so re-saving an already-known relation re-activates it.
+     * Mirrors the legacy Mage_Tag_Model_Resource_Tag_Relation::addRelations full-replace
+     * behaviour: loads every product_id currently related to the given tag_id(s) at the
+     * (customer, store) scope, diffs that against `added_product_ids`, inserts the missing
+     * rows, and deletes the removed ones. The customer_id scope is null-safe, so admin-
+     * authored assignments (customer_id IS NULL) are matched correctly.
      *
      * @param RelationModel $object
      * @return $this
@@ -180,64 +182,75 @@ class Relation extends AbstractDb
     {
         $customerId = $object->getData('customer_id');
         $storeId = (int)$object->getStoreId();
-        $addedProductIds = array_values(array_filter(array_map(
+        $addedProductIds = array_values(array_unique(array_filter(array_map(
             'intval',
             (array)$object->getData('added_product_ids')
-        )));
+        ))));
 
         $tagIds = (array)$object->getData('related_tag_ids');
         if ($tagIds === [] && $object->getTagId()) {
             $tagIds = [(int)$object->getTagId()];
         }
-        $tagIds = array_values(array_filter(array_map('intval', $tagIds)));
+        $tagIds = array_values(array_unique(array_filter(array_map('intval', $tagIds))));
 
-        if ($addedProductIds === [] || $tagIds === []) {
+        if ($tagIds === []) {
             return $this;
         }
 
         $connection = $this->getConnection();
         $mainTable = $this->getMainTable();
 
-        // Current (tag_id, product_id) set for scope.
+        // Current product_ids at this (tag_ids, customer, store) scope — NOT constrained
+        // by the incoming product_id set, so we can diff additions vs removals.
         $select = $connection->select()
-            ->from($mainTable, ['tag_id', 'product_id'])
+            ->distinct()
+            ->from($mainTable, ['product_id'])
             ->where('tag_id IN (?)', $tagIds)
-            ->where('product_id IN (?)', $addedProductIds)
             ->where('store_id = ?', $storeId);
         if ($customerId !== null) {
             $select->where('customer_id = ?', (int)$customerId);
         } else {
             $select->where('customer_id IS NULL');
         }
-        $existing = [];
-        foreach ($connection->fetchAll($select) as $row) {
-            $existing[(int)$row['tag_id']][(int)$row['product_id']] = true;
-        }
+        $currentProductIds = array_map('intval', $connection->fetchCol($select));
 
-        $createdAt = $this->date->gmtDate();
-        $insertRows = [];
-        foreach ($tagIds as $tagId) {
-            foreach ($addedProductIds as $productId) {
-                if (isset($existing[$tagId][$productId])) {
-                    continue;
+        $toAdd = array_values(array_diff($addedProductIds, $currentProductIds));
+        $toDelete = array_values(array_diff($currentProductIds, $addedProductIds));
+
+        if ($toAdd !== []) {
+            $createdAt = $this->date->gmtDate();
+            $insertRows = [];
+            foreach ($tagIds as $tagId) {
+                foreach ($toAdd as $productId) {
+                    $insertRows[] = [
+                        'tag_id' => $tagId,
+                        'customer_id' => $customerId === null ? null : (int)$customerId,
+                        'product_id' => $productId,
+                        'store_id' => $storeId,
+                        'active' => RelationModel::STATUS_ACTIVE,
+                        'created_at' => $createdAt,
+                    ];
                 }
-                $insertRows[] = [
-                    'tag_id' => $tagId,
-                    'customer_id' => $customerId === null ? null : (int)$customerId,
-                    'product_id' => $productId,
-                    'store_id' => $storeId,
-                    'active' => RelationModel::STATUS_ACTIVE,
-                    'created_at' => $createdAt,
-                ];
             }
-        }
-
-        if ($insertRows !== []) {
             $connection->insertOnDuplicate(
                 $mainTable,
                 $insertRows,
                 ['active', 'created_at']
             );
+        }
+
+        if ($toDelete !== []) {
+            $deleteWhere = [
+                'tag_id IN (?)' => $tagIds,
+                'product_id IN (?)' => $toDelete,
+                'store_id = ?' => $storeId,
+            ];
+            if ($customerId !== null) {
+                $deleteWhere['customer_id = ?'] = (int)$customerId;
+            } else {
+                $deleteWhere[] = 'customer_id IS NULL';
+            }
+            $connection->delete($mainTable, $deleteWhere);
         }
 
         return $this;

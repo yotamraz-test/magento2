@@ -268,6 +268,53 @@ class Tag extends AbstractDb
     }
 
     /**
+     * Populate scope-dependent fields after loading a tag row.
+     *
+     * - `visible_in_store_ids`: the distinct non-admin store ids with a summary row for this tag.
+     *   Used by Tag::isAvailableInStore() to decide whether the tag is visible in a given store.
+     * - `base_popularity`: when the object was loaded with a store scope (store_id set), the
+     *   store-specific base_popularity value from tag_properties — mirrors the joinLeft the
+     *   legacy resource used to add to _getLoadSelect for the (addBasePopularity, store) path.
+     *
+     * @param AbstractModel $object
+     * @return $this
+     */
+    protected function _afterLoad(AbstractModel $object): self
+    {
+        $connection = $this->getConnection();
+        $tagId = (int)$object->getId();
+
+        if ($tagId > 0) {
+            $select = $connection->select()
+                ->distinct()
+                ->from($this->getTable('tag_summary'), ['store_id'])
+                ->where('tag_id = :tag_id')
+                ->where('store_id > ?', 0);
+            $storeIds = $connection->fetchCol($select, ['tag_id' => $tagId]);
+            $object->setData('visible_in_store_ids', array_map('intval', $storeIds));
+
+            if ($object->hasData('store_id')) {
+                $propSelect = $connection->select()
+                    ->from($this->getTable('tag_properties'), ['base_popularity'])
+                    ->where('tag_id = :tag_id')
+                    ->where('store_id = :store_id');
+                $basePopularity = $connection->fetchOne(
+                    $propSelect,
+                    [
+                        'tag_id' => $tagId,
+                        'store_id' => (int)$object->getData('store_id'),
+                    ]
+                );
+                if ($basePopularity !== false) {
+                    $object->setData('base_popularity', (int)$basePopularity);
+                }
+            }
+        }
+
+        return parent::_afterLoad($object);
+    }
+
+    /**
      * Upsert the base popularity property row when the saved tag carries one.
      *
      * @param AbstractModel $object
