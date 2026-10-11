@@ -261,7 +261,6 @@ class Tag extends AbstractDb
             $summaryTable,
             [
                 'products' => new \Zend_Db_Expr('products - 1'),
-                'uses' => new \Zend_Db_Expr('uses - 1'),
             ],
             ['tag_id IN (?)' => $tagIds]
         );
