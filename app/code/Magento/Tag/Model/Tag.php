@@ -14,7 +14,6 @@ use Magento\Tag\Model\ResourceModel\Tag as TagResource;
 use Magento\Tag\Model\ResourceModel\Tag\Collection;
 use Magento\Tag\Model\Tag\Relation;
 use Magento\Tag\Model\Tag\RelationFactory;
-use Magento\Tag\Model\ResourceModel\Tag\Relation as RelationResource;
 
 /**
  * Tag model
@@ -75,17 +74,11 @@ class Tag extends AbstractModel implements TagInterface, IdentityInterface
     private RelationFactory $relationFactory;
 
     /**
-     * @var RelationResource
-     */
-    private RelationResource $relationResource;
-
-    /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
      * @param TagResource $resource
      * @param Collection|null $resourceCollection
      * @param RelationFactory $relationFactory
-     * @param RelationResource $relationResource
      * @param array $data
      */
     public function __construct(
@@ -94,11 +87,9 @@ class Tag extends AbstractModel implements TagInterface, IdentityInterface
         TagResource $resource,
         ?Collection $resourceCollection,
         RelationFactory $relationFactory,
-        RelationResource $relationResource,
         array $data = []
     ) {
         $this->relationFactory = $relationFactory;
-        $this->relationResource = $relationResource;
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
 

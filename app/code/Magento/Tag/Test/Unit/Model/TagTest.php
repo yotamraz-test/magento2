@@ -11,7 +11,6 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHe
 use Magento\Tag\Api\Data\TagInterface;
 use Magento\Tag\Model\ResourceModel\Tag as TagResource;
 use Magento\Tag\Model\ResourceModel\Tag\Collection;
-use Magento\Tag\Model\ResourceModel\Tag\Relation as RelationResource;
 use Magento\Tag\Model\Tag;
 use Magento\Tag\Model\Tag\Relation;
 use Magento\Tag\Model\Tag\RelationFactory;
@@ -50,11 +49,6 @@ class TagTest extends TestCase
      */
     private $relationFactoryMock;
 
-    /**
-     * @var RelationResource|MockObject
-     */
-    private $relationResourceMock;
-
     protected function setUp(): void
     {
         $this->tagResourceMock = $this->createMock(TagResource::class);
@@ -67,8 +61,6 @@ class TagTest extends TestCase
             ->onlyMethods(['create'])
             ->getMock();
 
-        $this->relationResourceMock = $this->createMock(RelationResource::class);
-
         $objectManagerHelper = new ObjectManagerHelper($this);
         $this->tag = $objectManagerHelper->getObject(
             Tag::class,
@@ -76,7 +68,6 @@ class TagTest extends TestCase
                 'resource' => $this->tagResourceMock,
                 'resourceCollection' => $this->collectionMock,
                 'relationFactory' => $this->relationFactoryMock,
-                'relationResource' => $this->relationResourceMock,
                 'data' => ['tag_id' => self::TAG_ID],
             ]
         );
