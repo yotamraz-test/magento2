@@ -142,7 +142,7 @@ class Relation extends AbstractDb
             $raw = $object->getProductId();
             $productIds = is_array($raw) ? $raw : ($raw === null ? [] : [$raw]);
         }
-        $productIds = array_values(array_filter(array_map('intval', (array)$productIds)));
+        $productIds = $this->sanitizeIntArray((array)$productIds);
         if ($productIds === []) {
             return [];
         }
@@ -182,16 +182,15 @@ class Relation extends AbstractDb
     {
         $customerId = $object->getData('customer_id');
         $storeId = (int)$object->getStoreId();
-        $addedProductIds = array_values(array_unique(array_filter(array_map(
-            'intval',
+        $addedProductIds = $this->sanitizeUniqueIntArray(
             (array)$object->getData('added_product_ids')
-        ))));
+        );
 
         $tagIds = (array)$object->getData('related_tag_ids');
         if ($tagIds === [] && $object->getTagId()) {
             $tagIds = [(int)$object->getTagId()];
         }
-        $tagIds = array_values(array_unique(array_filter(array_map('intval', $tagIds))));
+        $tagIds = $this->sanitizeUniqueIntArray($tagIds);
 
         if ($tagIds === []) {
             return $this;
@@ -265,7 +264,7 @@ class Relation extends AbstractDb
      */
     public function deactivate(array $tagIds, int $customerId): self
     {
-        $tagIds = array_values(array_filter(array_map('intval', $tagIds)));
+        $tagIds = $this->sanitizeIntArray($tagIds);
         if ($tagIds === []) {
             return $this;
         }
@@ -280,5 +279,15 @@ class Relation extends AbstractDb
         );
 
         return $this;
+    }
+
+    private function sanitizeIntArray(array $ids): array
+    {
+        return array_values(array_filter(array_map('intval', $ids)));
+    }
+
+    private function sanitizeUniqueIntArray(array $ids): array
+    {
+        return array_values(array_unique(array_filter(array_map('intval', $ids))));
     }
 }
