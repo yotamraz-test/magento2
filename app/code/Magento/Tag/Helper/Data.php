@@ -9,7 +9,6 @@ namespace Magento\Tag\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
-use Magento\Tag\Api\Data\TagInterface;
 
 /**
  * Tag helper
@@ -57,42 +56,5 @@ class Data extends AbstractHelper
         }
 
         return $tags;
-    }
-
-    /**
-     * Get tag statuses as an associative array.
-     *
-     * @return array
-     */
-    public function getStatusesArray(): array
-    {
-        return [
-            TagInterface::STATUS_APPROVED => __('Approved'),
-            TagInterface::STATUS_PENDING => __('Pending'),
-            TagInterface::STATUS_DISABLED => __('Disabled'),
-        ];
-    }
-
-    /**
-     * Get tag statuses as an options array for UI dropdowns.
-     *
-     * @return array
-     */
-    public function getStatusesOptionsArray(): array
-    {
-        return [
-            [
-                'label' => __('Disabled'),
-                'value' => TagInterface::STATUS_DISABLED,
-            ],
-            [
-                'label' => __('Pending'),
-                'value' => TagInterface::STATUS_PENDING,
-            ],
-            [
-                'label' => __('Approved'),
-                'value' => TagInterface::STATUS_APPROVED,
-            ],
-        ];
     }
 }

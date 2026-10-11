@@ -56,4 +56,41 @@ class Status implements OptionSourceInterface
     {
         return $this->toOptionArray();
     }
+
+    /**
+     * Get tag statuses as an associative array (value => label).
+     *
+     * @return array
+     */
+    public function getStatusesArray(): array
+    {
+        return [
+            TagInterface::STATUS_DISABLED => __('Disabled'),
+            TagInterface::STATUS_PENDING  => __('Pending'),
+            TagInterface::STATUS_APPROVED => __('Approved'),
+        ];
+    }
+
+    /**
+     * Get tag statuses as an options array for UI dropdowns.
+     *
+     * @return array
+     */
+    public function getStatusesOptionsArray(): array
+    {
+        return [
+            [
+                'label' => __('Disabled'),
+                'value' => TagInterface::STATUS_DISABLED,
+            ],
+            [
+                'label' => __('Pending'),
+                'value' => TagInterface::STATUS_PENDING,
+            ],
+            [
+                'label' => __('Approved'),
+                'value' => TagInterface::STATUS_APPROVED,
+            ],
+        ];
+    }
 }
