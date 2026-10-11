@@ -7,7 +7,9 @@ declare(strict_types=1);
 
 namespace Magento\Tag\Model;
 
+use Magento\Authorization\Model\UserContextInterface;
 use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Framework\Exception\AuthorizationException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Tag\Api\Data\TagInterface;
@@ -31,13 +33,15 @@ class TagManagement implements TagManagementInterface
      * @param TagHelper $tagHelper
      * @param CustomerSession $customerSession
      * @param StoreManagerInterface $storeManager
+     * @param UserContextInterface $userContext
      */
     public function __construct(
         private readonly TagFactory $tagFactory,
         private readonly TagResource $tagResource,
         private readonly TagHelper $tagHelper,
         private readonly CustomerSession $customerSession,
-        private readonly StoreManagerInterface $storeManager
+        private readonly StoreManagerInterface $storeManager,
+        private readonly UserContextInterface $userContext
     ) {
     }
 
@@ -50,12 +54,13 @@ class TagManagement implements TagManagementInterface
      * @param int $productId
      * @param string[] $tagNames
      * @return string[]
+     * @throws AuthorizationException
      * @throws CouldNotSaveException
      */
     public function addTagsToProduct($productId, array $tagNames)
     {
         $productId = (int)$productId;
-        $customerId = (int)$this->customerSession->getCustomerId();
+        $customerId = $this->resolveCustomerId();
         $storeId = (int)$this->storeManager->getStore()->getId();
 
         $cleanedTagNames = $this->tagHelper->cleanTags($tagNames);
@@ -91,5 +96,33 @@ class TagManagement implements TagManagementInterface
         }
 
         return $results;
+    }
+
+    /**
+     * Resolve the submitting customer id.
+     *
+     * REST calls present the customer via the webapi UserContext (bearer token);
+     * frontend controller calls present it via the customer session. The REST
+     * context is authoritative when both are present because the frontend session
+     * is not populated inside a stateless REST request.
+     *
+     * @return int
+     * @throws AuthorizationException
+     */
+    private function resolveCustomerId(): int
+    {
+        if ((int)$this->userContext->getUserType() === UserContextInterface::USER_TYPE_CUSTOMER) {
+            $userId = (int)$this->userContext->getUserId();
+            if ($userId > 0) {
+                return $userId;
+            }
+        }
+
+        $sessionCustomerId = (int)$this->customerSession->getCustomerId();
+        if ($sessionCustomerId > 0) {
+            return $sessionCustomerId;
+        }
+
+        throw new AuthorizationException(__('Customer authentication is required to tag a product.'));
     }
 }
