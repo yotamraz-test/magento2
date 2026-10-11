@@ -50,16 +50,10 @@ class Collection extends AbstractCollection
             return $this;
         }
 
-        $joinCondition = 'main_table.tag_id = summary.tag_id';
-        if ($storeId !== null) {
-            $joinCondition .= $this->getConnection()
-                ->quoteInto(' AND summary.store_id = ?', $storeId);
-        }
-
         $this->getSelect()
             ->joinLeft(
                 ['summary' => $this->getTable('tag_summary')],
-                $joinCondition,
+                $this->buildSummaryJoinCondition($storeId),
                 ['popularity' => 'summary.popularity']
             )
             ->group('main_table.tag_id');
@@ -81,15 +75,9 @@ class Collection extends AbstractCollection
             return $this;
         }
 
-        $joinCondition = 'main_table.tag_id = summary.tag_id';
-        if ($storeId !== null) {
-            $joinCondition .= $this->getConnection()
-                ->quoteInto(' AND summary.store_id = ?', $storeId);
-        }
-
         $this->getSelect()->joinLeft(
             ['summary' => $this->getTable('tag_summary')],
-            $joinCondition,
+            $this->buildSummaryJoinCondition($storeId),
             ['store_id', 'popularity', 'customers', 'products', 'uses']
         );
 
@@ -237,5 +225,15 @@ class Collection extends AbstractCollection
         $select->reset(Select::HAVING);
         $select->columns('COUNT(DISTINCT main_table.tag_id)');
         return $select;
+    }
+
+    private function buildSummaryJoinCondition(?int $storeId): string
+    {
+        $joinCondition = 'main_table.tag_id = summary.tag_id';
+        if ($storeId !== null) {
+            $joinCondition .= $this->getConnection()
+                ->quoteInto(' AND summary.store_id = ?', $storeId);
+        }
+        return $joinCondition;
     }
 }
