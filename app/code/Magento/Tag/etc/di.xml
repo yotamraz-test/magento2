@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright 2024 Adobe
+ * All Rights Reserved.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Magento\Tag\Api\Data\TagInterface" type="Magento\Tag\Model\Tag"/>
+    <preference for="Magento\Tag\Api\Data\TagSearchResultsInterface" type="Magento\Tag\Model\TagSearchResults"/>
+    <preference for="Magento\Tag\Api\TagRepositoryInterface" type="Magento\Tag\Model\TagRepository"/>
+    <preference for="Magento\Tag\Api\TagManagementInterface" type="Magento\Tag\Model\TagManagement"/>
+    <virtualType name="Magento\Tag\Model\Api\SearchCriteria\TagCollectionProcessor" type="Magento\Framework\Api\SearchCriteria\CollectionProcessor">
+        <arguments>
+            <argument name="processors" xsi:type="array">
+                <item name="filters" xsi:type="object">Magento\Framework\Api\SearchCriteria\CollectionProcessor\FilterProcessor</item>
+                <item name="sorting" xsi:type="object">Magento\Framework\Api\SearchCriteria\CollectionProcessor\SortingProcessor</item>
+                <item name="pagination" xsi:type="object">Magento\Framework\Api\SearchCriteria\CollectionProcessor\PaginationProcessor</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Magento\Tag\Model\TagRepository">
+        <arguments>
+            <argument name="collectionProcessor" xsi:type="object">Magento\Tag\Model\Api\SearchCriteria\TagCollectionProcessor</argument>
+        </arguments>
+    </type>
+    <type name="Magento\Tag\Model\TagManagement">
+        <arguments>
+            <argument name="customerSession" xsi:type="object">Magento\Customer\Model\Session\Proxy</argument>
+        </arguments>
+    </type>
+</config>
